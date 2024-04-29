@@ -41,7 +41,6 @@ tier-row {
     justify-content: space-between;
     align-items: stretch;
     padding: 5px 5px;
-    margin: 3px 0px;
 }
 
 .tier-buttons {
@@ -64,6 +63,7 @@ tier-row {
 .tier-row {
     display: flex;
     flex-flow: row wrap;
+    align-items: center;
     background-color: #222222;
     gap: 3px;
     margin: 3px 0px;
@@ -103,7 +103,7 @@ tier-row {
     align-content: center;
     justify-content: center;
     height: 4em;
-    width: 8em;
+    width: 10em;
     padding: 6px;
     margin: 3px 0px;
 }
