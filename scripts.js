@@ -1,5 +1,6 @@
 const tierRowTemplate = document.querySelector('#tierRowTemplate');
 const listElement = document.querySelector('#list');
+const shortcutAreaElement = document.querySelector('#shortcuts');
 const unsortedAreaElement = document.querySelector('#unsorted');
 const importDialogElement = document.querySelector('#importDialog');
 const importInputElement = document.querySelector('#importInput');
@@ -25,8 +26,8 @@ class TierRowElement extends HTMLElement {
     this.closeDialogElement = shadow.querySelector('#closeDialog');
     this.handleElement = shadow.querySelector('#handle');
 
-    this.setAttribute('name', this.getAttribute('name') ? this.getAttribute('name') : name);
-    this.setAttribute('color', this.getAttribute('color') ? this.getAttribute('color') : color);
+    this.setAttribute('data-name', this.getAttribute('data-name') ? this.getAttribute('data-name') : name);
+    this.setAttribute('data-color', this.getAttribute('data-color') ? this.getAttribute('data-color') : color);
 
     // Drag and drop events
     this.ondragstart = (event) => event.dataTransfer.setData('row', event.target.id);
@@ -40,26 +41,33 @@ class TierRowElement extends HTMLElement {
 
     // Edit modal
     this.editButtonElement.onclick = (event) => {
-      this.editTitleElement.value = this.getAttribute('name');
-      this.editColorElement.value = this.getAttribute('color');
+      this.editTitleElement.value = this.getAttribute('data-name');
+      this.editColorElement.value = this.getAttribute('data-color');
       this.dialogElement.showModal();
     };
-    this.editTitleElement.onchange = (event) => this.setAttribute('name', event.target.value);
-    this.editColorElement.onchange = (event) => this.setAttribute('color', event.target.value);
+    this.editTitleElement.onchange = (event) => this.setAttribute('data-name', event.target.value);
+    this.editColorElement.onchange = (event) => this.setAttribute('data-color', event.target.value);
     this.closeDialogElement.onclick = (event) => this.dialogElement.close();
 
   }
 
   static get observedAttributes() {
-    return ['name', 'color'];
+    return ['data-name', 'data-color'];
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
-    if (name === 'name') this.headElement.textContent = newValue;
-    if (name === 'color') {
+    const shortcut = document.querySelector(`[data-shortcut-to='${this.id}']`);
+    if (name === 'data-name') { 
+      this.headElement.textContent = newValue;
+
+      if (shortcut) shortcut.setAttribute('data-name', newValue);
+    }
+    if (name === 'data-color') {
       this.headElement.style.backgroundColor = newValue;
       this.headElement.style.color = brightnessByColor(newValue) > 127 ? 'black' : 'white';
       this.buttonContainerElement.style.color = this.headElement.style.color;
+
+      if (shortcut) shortcut.setAttribute('data-color', newValue);
     };
   }
 
@@ -99,19 +107,19 @@ class TierItemElement extends HTMLDivElement {
 
     this.id = 'tierItem-' + items++;
 
-    this.setAttribute('image', this.getAttribute('image') ? this.getAttribute('image') : image)
-    this.setAttribute('text', this.getAttribute('text') ? this.getAttribute('text') : text)
-    this.setAttribute('tooltip', this.getAttribute('tooltip') ? this.getAttribute('tooltip') : tooltip)
+    this.setAttribute('data-image', this.getAttribute('data-image') ? this.getAttribute('data-image') : image)
+    this.setAttribute('data-text', this.getAttribute('data-text') ? this.getAttribute('data-text') : text)
+    this.setAttribute('data-tooltip', this.getAttribute('data-tooltip') ? this.getAttribute('data-tooltip') : tooltip)
   }
 
   static get observedAttributes() {
-    return ['image', 'text', 'tooltip']
+    return ['data-image', 'data-text', 'data-tooltip']
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
-    if (name === 'image') this.style.backgroundImage = `url('${newValue}')`;
-    if (name === 'text') this.innerHTML = newValue;
-    if (name === 'tooltip') this.title = newValue;
+    if (name === 'data-image') this.style.backgroundImage = `url('${newValue}')`;
+    if (name === 'data-text') this.innerHTML = newValue;
+    if (name === 'data-tooltip') this.title = newValue;
   }
 
   drag(ev) {
@@ -121,8 +129,47 @@ class TierItemElement extends HTMLDivElement {
 }
 customElements.define("tier-item", TierItemElement, { extends: "div" });
 
+class TierShortcutElement extends HTMLDivElement {
+  constructor(tierRef) {
+    super();
+    this.tierRef = tierRef;
+
+    this.className = 'tier-shortcut';
+
+    this.setAttribute('data-name', this.tierRef.getAttribute('data-name'));
+    this.setAttribute('data-color', this.tierRef.getAttribute('data-color'));
+    this.setAttribute('data-shortcut-to', this.tierRef.id);
+
+    this.ondragover = (event) => event.preventDefault();
+    this.ondrop = (event) => this.drop(event);
+  }
+
+  static get observedAttributes() {
+    return ['data-name', 'data-color']
+  }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (name === 'data-name') this.innerHTML = `<div>${newValue}</div>`;
+    if (name === 'data-color') {
+      this.style.backgroundColor = newValue;
+      this.style.color = brightnessByColor(newValue) > 127 ? 'black' : 'white';
+    };
+  }
+
+  drop = (event) => {
+    event.preventDefault();
+    if (!event.dataTransfer.types.includes('item')) return;
+    const data = event.dataTransfer.getData('item');
+    const moved = document.getElementById(data);
+    this.tierRef.appendChild(moved);
+  }
+}
+customElements.define('tier-shortcut', TierShortcutElement, { extends: 'div' });
+
 function addTier() {
-  listElement.appendChild(new TierRowElement());
+  const newTier = new TierRowElement();
+  listElement.appendChild(newTier);
+  shortcutAreaElement.appendChild()
 }
 
 // Handle drag and drop for tiers
@@ -134,13 +181,17 @@ listElement.ondrop = (event) => {
   const moved = document.getElementById(data);
   const refNode = event.target instanceof TierRowElement ? event.target : null;
   listElement.insertBefore(moved, refNode);
+
+  const movedShortcut = document.querySelector(`[data-shortcut-to='${moved.id}']`);
+  const refShortcut = document.querySelector(`[data-shortcut-to='${refNode.id}']`);
+  shortcutAreaElement.insertBefore(movedShortcut, refShortcut);
 }
 
 // Drag and drop for unsorted area
 unsortedAreaElement.ondragover = (event) => { event.preventDefault() }
 unsortedAreaElement.ondrop = (event) => {
   event.preventDefault();
-  if (!event.dataTransfer.types.includes('row')) return;
+  if (!event.dataTransfer.types.includes('item')) return;
   const data = event.dataTransfer.getData("item");
   const moved = document.getElementById(data);
   const refNode = event.target instanceof TierItemElement ? event.target : null
@@ -179,6 +230,7 @@ function importList(json) {
     parsed.rows.forEach(r => {
       const elem = new TierRowElement(r.name, r.color);
       listElement.appendChild(elem);
+      shortcutAreaElement.appendChild(new TierShortcutElement(elem));
       r.items.forEach(i => {
         elem.appendChild(new TierItemElement(i.image, i.text, i.tooltip));
       });
@@ -197,22 +249,22 @@ function exportList() {
   const rows = rowElems.map(r => {
     const items = Array.from(r.children).map(i => {
       return {
-        image: i.getAttribute('image'),
-        text: i.getAttribute('text'),
-        tooltip: i.getAttribute('tooltip')
+        image: i.getAttribute('data-image'),
+        text: i.getAttribute('data-text'),
+        tooltip: i.getAttribute('data-tooltip')
       }
     });
     return {
-      name: r.getAttribute('name'),
-      color: r.getAttribute('color'),
+      name: r.getAttribute('data-name'),
+      color: r.getAttribute('data-color'),
       items: items
     }
   });
   const unsorted = Array.from(unsortedAreaElement.children).map(i => {
     return {
-      image: i.getAttribute('image'),
-      text: i.getAttribute('text'),
-      tooltip: i.getAttribute('tooltip')
+      image: i.getAttribute('data-image'),
+      text: i.getAttribute('data-text'),
+      tooltip: i.getAttribute('data-tooltip')
     }
   })
   console.log(JSON.stringify({ rows: rows, unsorted: unsorted }));
