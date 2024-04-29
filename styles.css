@@ -108,6 +108,7 @@ tier-row {
     margin: 3px 0px;
 }
 
+/* You can see the exact moment when I lost IE support */
 .tier-shortcut>div {
     display: -webkit-box;
     -webkit-line-clamp: 4;
