@@ -48,7 +48,6 @@ tier-row {
     display: flex;
     justify-content: space-between;
     float: left;
-    cursor: pointer;
     flex-grow: 0;
 }
 
