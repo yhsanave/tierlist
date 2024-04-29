@@ -18,6 +18,7 @@ class TierRowElement extends HTMLElement {
     shadow.append(tierRowTemplate.content.cloneNode(true));
     this.headElement = shadow.querySelector('#head');
     this.buttonContainerElement = shadow.querySelector('#buttons');
+    this.nameElement = shadow.querySelector('#name');
     this.rowElement = shadow.querySelector('#row');
     this.editButtonElement = shadow.querySelector('#editButton');
     this.dialogElement = shadow.querySelector('#editDialog');
@@ -57,8 +58,8 @@ class TierRowElement extends HTMLElement {
 
   attributeChangedCallback(name, oldValue, newValue) {
     const shortcut = document.querySelector(`[data-shortcut-to='${this.id}']`);
-    if (name === 'data-name') { 
-      this.headElement.textContent = newValue;
+    if (name === 'data-name') {
+      this.nameElement.textContent = newValue;
 
       if (shortcut) shortcut.setAttribute('data-name', newValue);
     }
@@ -149,7 +150,10 @@ class TierShortcutElement extends HTMLDivElement {
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
-    if (name === 'data-name') this.innerHTML = `<div>${newValue}</div>`;
+    if (name === 'data-name') {
+      this.innerHTML = `<div>${newValue}</div>`;
+      this.title = newValue;
+    }
     if (name === 'data-color') {
       this.style.backgroundColor = newValue;
       this.style.color = brightnessByColor(newValue) > 127 ? 'black' : 'white';

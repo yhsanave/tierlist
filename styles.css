@@ -35,19 +35,31 @@ tier-row {
 
 .tier-head {
     display: flex;
+    flex-direction: column;
     min-height: 150px;
     width: 125px;
-    text-align: center;
-    justify-content: center;
-    align-items: center;
-    padding: 5px;
+    justify-content: space-between;
+    align-items: stretch;
+    padding: 5px 5px;
     margin: 3px 0px;
+}
+
+.tier-buttons {
+    display: flex;
+    justify-content: space-between;
+    float: left;
+    cursor: pointer;
+    flex-grow: 0;
+}
+
+.tier-name {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
     text-align: center;
     font-weight: bold;
     font-size: medium;
     font-family: sans-serif;
-    padding-right: 10px;
-    padding-left: 10px;
 }
 
 .tier-row {
@@ -97,13 +109,12 @@ tier-row {
     margin: 3px 0px;
 }
 
-.tier-shortcut > div {
+.tier-shortcut>div {
     display: -webkit-box;
     -webkit-line-clamp: 4;
     -webkit-box-orient: vertical;
     overflow: hidden;
     text-align: center;
-    font-weight: bold;
     font-size: small;
     font-family: sans-serif;
 }
