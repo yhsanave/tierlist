@@ -48,7 +48,6 @@ tier-row {
     font-family: sans-serif;
     padding-right: 10px;
     padding-left: 10px;
-    word-break: break-all;
 }
 
 .tier-row {
@@ -103,7 +102,6 @@ tier-row {
     -webkit-line-clamp: 4;
     -webkit-box-orient: vertical;
     overflow: hidden;
-    word-break: break-all;
     text-align: center;
     font-weight: bold;
     font-size: small;
