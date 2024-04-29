@@ -14,10 +14,20 @@
   <div id="controls">
     <span>Tier List</span>
     <button type="button" onclick="addTier()">Add Tier</button>
+    <button type="button" onclick="importDialogElement.showModal()">Import</button>
+    <button type="button" onclick="exportList()">Export JSON</button>
   </div>
   <div class="list-wrapper" id="list"></div>
-  <div class="unsorted-area" id="unsorted">
-  </div>
+  <div class="unsorted-area" id="unsorted"></div>
+  <dialog id="importDialog">
+    <form style="display: flex; flex-direction: column;">
+      <textarea id="importInput" placeholder="Paste json here..." rows="20" cols="80"></textarea>
+      <div>
+        <button type="button" onclick="importItems(importInputElement.value)">Import Items</button>
+        <button type="button" onclick="importList(importInputElement.value)">Import List</button>
+      </div>
+    </form>
+  </dialog>
 </body>
 
 </html>

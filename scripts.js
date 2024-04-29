@@ -1,6 +1,8 @@
 const tierRowTemplate = document.querySelector('#tierRowTemplate');
 const listElement = document.querySelector('#list');
 const unsortedAreaElement = document.querySelector('#unsorted');
+const importDialogElement = document.querySelector('#importDialog');
+const importInputElement = document.querySelector('#importInput');
 
 const tiers = [];
 var items = 0;
@@ -9,7 +11,7 @@ var rows = 0;
 class TierRowElement extends HTMLElement {
   constructor(name = 'New Tier', color = '#FFF') {
     super();
-    this.id = 'row#' + rows++;
+    this.id = 'row-' + rows++;
 
     const shadow = this.attachShadow({ mode: "open" });
     shadow.append(tierRowTemplate.content.cloneNode(true));
@@ -63,15 +65,17 @@ class TierRowElement extends HTMLElement {
 
   drop(ev) {
     ev.preventDefault();
-    var data = ev.dataTransfer.getData("item");
-    const refNode = ev.target instanceof TierItemElement ? ev.target : null
-    this.insertBefore(document.getElementById(data), refNode);
+    if (!ev.dataTransfer.types.includes('item')) return;
+    const data = ev.dataTransfer.getData("item");
+    const moved = document.getElementById(data);
+    const refNode = ev.target instanceof TierItemElement ? ev.target : null;
+    this.insertBefore(moved, refNode);
   }
 }
 customElements.define("tier-row", TierRowElement);
 
 class TierItemElement extends HTMLDivElement {
-  constructor() {
+  constructor(image = '', text = '', tooltip = '') {
     super();
     this.style.display = "flex";
     this.style.backgroundRepeat = "no-repeat";
@@ -93,7 +97,11 @@ class TierItemElement extends HTMLDivElement {
     this.draggable = "true";
     this.ondragstart = (event) => this.drag(event);
 
-    this.id = 'tierItem#' + items++;
+    this.id = 'tierItem-' + items++;
+
+    this.setAttribute('image', this.getAttribute('image') ? this.getAttribute('image') : image)
+    this.setAttribute('text', this.getAttribute('text') ? this.getAttribute('text') : text)
+    this.setAttribute('tooltip', this.getAttribute('tooltip') ? this.getAttribute('tooltip') : tooltip)
   }
 
   static get observedAttributes() {
@@ -121,27 +129,25 @@ function addTier() {
 listElement.ondragover = (event) => { event.preventDefault() }
 listElement.ondrop = (event) => {
   event.preventDefault();
-  var data = event.dataTransfer.getData("row");
-  console.log(event);
-  const refNode = event.target instanceof TierRowElement ? event.target : null
-  listElement.insertBefore(document.getElementById(data), refNode);
+  if (!event.dataTransfer.types.includes('row')) return;
+  const data = event.dataTransfer.getData("row");
+  const moved = document.getElementById(data);
+  const refNode = event.target instanceof TierRowElement ? event.target : null;
+  listElement.insertBefore(moved, refNode);
 }
 
+// Drag and drop for unsorted area
 unsortedAreaElement.ondragover = (event) => { event.preventDefault() }
 unsortedAreaElement.ondrop = (event) => {
   event.preventDefault();
-  var data = event.dataTransfer.getData("item");
-  console.log(event);
+  if (!event.dataTransfer.types.includes('row')) return;
+  const data = event.dataTransfer.getData("item");
+  const moved = document.getElementById(data);
   const refNode = event.target instanceof TierItemElement ? event.target : null
-  unsortedAreaElement.insertBefore(document.getElementById(data), refNode);
+  unsortedAreaElement.insertBefore(moved, refNode);
 }
 
-/**
- * Calculate brightness value by RGB or HEX color.
- * @param color (String) The color value in RGB or HEX (for example: #000000 || #000 || rgb(0,0,0) || rgba(0,0,0,0))
- * @returns (Number) The brightness value (dark) 0 ... 255 (light)
- */
-function brightnessByColor (color) {
+function brightnessByColor(color) {
   var color = "" + color, isHEX = color.indexOf("#") == 0, isRGB = color.indexOf("rgb") == 0;
   if (isHEX) {
     const hasFullSpec = color.length == 7;
@@ -152,5 +158,62 @@ function brightnessByColor (color) {
     var m = color.match(/(\d+){3}/g);
     if (m) var r = m[0], g = m[1], b = m[2];
   }
-  if (typeof r != "undefined") return ((r*299)+(g*587)+(b*114))/1000;
+  if (typeof r != "undefined") return ((r * 299) + (g * 587) + (b * 114)) / 1000;
+}
+
+function importItems(json) {
+  try {
+    const parsed = JSON.parse(json);
+    parsed.items.forEach(i => {
+      unsortedAreaElement.appendChild(new TierItemElement(i.image, i.text, i.tooltip));
+    });
+    importDialogElement.close();
+  } catch {
+    alert('Invalid JSON');
+  }
+}
+
+function importList(json) {
+  try {
+    const parsed = JSON.parse(json);
+    parsed.rows.forEach(r => {
+      const elem = new TierRowElement(r.name, r.color);
+      listElement.appendChild(elem);
+      r.items.forEach(i => {
+        elem.appendChild(new TierItemElement(i.image, i.text, i.tooltip));
+      });
+    });
+    parsed.unsorted.forEach(i => {
+      unsortedAreaElement.appendChild(new TierItemElement(i.image, i.text, i.tooltip));
+    });
+    importDialogElement.close();
+  } catch {
+    alert('Invalid JSON');
+  }
+}
+
+function exportList() {
+  const rowElems = Array.from(document.querySelectorAll('tier-row'));
+  const rows = rowElems.map(r => {
+    const items = Array.from(r.children).map(i => {
+      return {
+        image: i.getAttribute('image'),
+        text: i.getAttribute('text'),
+        tooltip: i.getAttribute('tooltip')
+      }
+    });
+    return {
+      name: r.getAttribute('name'),
+      color: r.getAttribute('color'),
+      items: items
+    }
+  });
+  const unsorted = Array.from(unsortedAreaElement.children).map(i => {
+    return {
+      image: i.getAttribute('image'),
+      text: i.getAttribute('text'),
+      tooltip: i.getAttribute('tooltip')
+    }
+  })
+  console.log(JSON.stringify({ rows: rows, unsorted: unsorted }));
 }
