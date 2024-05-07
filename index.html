@@ -15,7 +15,7 @@
     <span>Tier List</span>
     <button type="button" onclick="addTier()">Add Tier</button>
     <button type="button" onclick="importDialogElement.showModal()">Import</button>
-    <button type="button" onclick="exportList()">Export JSON</button>
+    <button type="button" onclick="exportJson()">Export JSON</button>
   </div>
   <div class="list-wrapper" id="list"></div>
   <div class="shortcut-area" id="shortcuts"></div>
@@ -50,7 +50,7 @@
     <slot></slot>
   </div>
   <dialog id="editDialog">
-    <form class="edit-row-form">
+    <form class="edit-row-form" onsubmit="return false">
       <label for="editName">Name:</label>
       <input type="text" id="editName" autofocus />
       <label for="editColor">Color:</label>

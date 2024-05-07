@@ -248,7 +248,7 @@ function importList(json) {
   }
 }
 
-function exportList() {
+function exportJson() {
   const rowElems = Array.from(document.querySelectorAll('tier-row'));
   const rows = rowElems.map(r => {
     const items = Array.from(r.children).map(i => {
